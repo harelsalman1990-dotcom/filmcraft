@@ -52,6 +52,9 @@ are never linked or shipped ([AGENTS.md](../AGENTS.md) §2).
 - If a tool is missing the test prints `SKIPPED (<test>): ffmpeg not found …` and passes. Set
   **`FILMCRAFT_REQUIRE_ORACLES=1`** (CI) to make every such skip a failure. In new tests use
   `let ff = filmcraft_testkit::require_ffmpeg!();` (also `require_ffprobe!`, `require_oracles!`).
+  The pull-request workflow (`.github/workflows/ci.yml`) installs ffmpeg on all three OSs and sets
+  the variable on macOS, whose Homebrew ffmpeg is current and complete; Ubuntu's is older, so the
+  Linux job lets the tests that need a newer one skip.
 - Some oracles need a recent ffmpeg: the APV tests (`crates/apv/tests/oracle.rs`) skip when
   `ffmpeg -formats` does not list `apv` (ffmpeg ≥ 8.0), naming the detected version.
 - Fixtures are generated on first use into `<workspace>/target/fixtures/<crate>/`

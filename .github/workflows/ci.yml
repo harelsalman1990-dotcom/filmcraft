@@ -1,0 +1,114 @@
+# The quality gates on every pull request and every push to main, on Linux, macOS and Windows:
+# `cargo xtask ci` (fmt, clippy, tests, layers, assets, wasm), the same command contributors run
+# before a commit (docs/contributing.md §3), so a regression fails here before it reaches main.
+# The Linux job builds with craft-fonts (the font tests run), the others without (the build must
+# also work without that optional input). ffmpeg and ffprobe are installed on all three so the
+# oracle tests run (docs/testing.md §2); on macOS a missing oracle fails the job instead of
+# skipping (`FILMCRAFT_REQUIRE_ORACLES`), because Homebrew's ffmpeg is recent and complete
+# (libx264 / libx265 / libaom / libvpx; APV needs ffmpeg 8). Ubuntu's ffmpeg is older, so on
+# Linux the tests that need a newer one print SKIPPED. No secrets are used and nothing is uploaded.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels the run for the previous one; runs on main all finish.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  RUST_BACKTRACE: "1"
+  # `cargo xtask ci` builds in release mode. The release profile in Cargo.toml (thin LTO, one
+  # codegen unit) is for the binaries people install; here it would make every run much longer
+  # without changing what the tests check, so it is relaxed for this build only.
+  CARGO_PROFILE_RELEASE_LTO: "off"
+  CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "16"
+
+jobs:
+  gates:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            runner: ubuntu-24.04
+            craft-fonts: true
+            require-oracles: false
+          - name: macOS
+            runner: macos-15
+            craft-fonts: false
+            require-oracles: true
+          - name: Windows
+            runner: windows-2025
+            craft-fonts: false
+            require-oracles: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The same ref as release.yml's craft-fonts-ref; move both together.
+      - name: Check out craft-fonts
+        if: matrix.craft-fonts
+        uses: storytold/craft-common-actions/actions/checkout-craft-fonts@main
+        with:
+          ref: abb83316d96aa59c1cf64784289e378fe9fa5695
+      - name: Build with craft-fonts
+        if: matrix.craft-fonts
+        shell: bash
+        run: |
+          echo "CRAFT_FONTS_DIR=$GITHUB_WORKSPACE/craft-fonts" >> "$GITHUB_ENV"
+          echo "CRAFT_FONTS_REQUIRED=1" >> "$GITHUB_ENV"
+
+      # The headers winit, wgpu, cpal and rfd need (the list of the shared install-linux-deps
+      # action, without the packaging tools), Mesa's software Vulkan driver (lavapipe) so the
+      # GPU-vs-CPU parity tests run on a runner without a GPU, and the test oracle.
+      - name: Install Linux build libraries and ffmpeg
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxkbcommon-dev libwayland-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev \
+            libasound2-dev pkg-config \
+            mesa-vulkan-drivers ffmpeg
+      - name: Install ffmpeg (Homebrew)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+      - name: Install ffmpeg (Chocolatey)
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg --no-progress -y
+
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          key: ci-${{ matrix.name }}
+          # Pull requests restore main's cache and don't write their own.
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      # Fails if an oracle is missing from PATH, so the oracle tests cannot skip unnoticed.
+      - name: Tool versions
+        shell: bash
+        run: |
+          rustc -Vv
+          cargo -V
+          ffmpeg -version
+          ffprobe -version
+
+      - name: cargo xtask ci
+        env:
+          FILMCRAFT_REQUIRE_ORACLES: ${{ matrix.require-oracles && '1' || '' }}
+        run: cargo xtask ci

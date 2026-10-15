@@ -126,6 +126,12 @@ Run them with `CRAFT_FONTS_DIR` set too when you change font code ([craft-fonts]
 
 `cargo xtask` is an alias in `.cargo/config.toml` for `cargo run -p xtask --`.
 
+`.github/workflows/ci.yml` runs `cargo xtask ci` on every pull request and every push to `main`,
+on Linux (built with craft-fonts), macOS and Windows (without), with ffmpeg installed so the oracle
+tests run (required on macOS, [testing.md §2](testing.md#2-ffmpeg-oracle-tests)). It relaxes the
+release profile's LTO and codegen units to keep runs short; what it checks is what the local command
+checks.
+
 ### Never crash
 
 Production code must never crash: a crash loses someone's work, so this outranks feature work. The rules

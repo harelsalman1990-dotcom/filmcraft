@@ -1,6 +1,6 @@
 # Where FilmCraft falls short of Premiere Pro
 
-> **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-10 · **Change:** major (new file: ROADMAP's "Where we are lacking" re-measured against Premiere Pro 26.5.2 and the open issue list) · **Target:** Adobe Premiere Pro 2026 (26.5.2)
+> **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-15 · **Change:** minor (G4: `cargo xtask ci` runs on pull requests on Linux, macOS and Windows) · **Target:** Adobe Premiere Pro 2026 (26.5.2)
 
 Every known shortfall, one entry each, ranked by what most stops an editor using FilmCraft for real
 work. This is the work list: agents should prefer it over adding checklist items. Numbers are in
@@ -88,17 +88,23 @@ platforms** G4, G9, G17; **performance** G16; **ecosystem** G11; **measurement**
   hand. An explicit `WGPU_BACKEND` stays in charge. On Windows, a GPU that Vulkan lists through two
   installed versions of one driver (GPUs on different driver packages) draws with the newer one
   instead of dying inside the stale one (`filmcraft_gpu::adapter`).
-- **Missing:** a launch that never fails, and CI that runs the gates.
+- **Have (CI):** `.github/workflows/ci.yml` (2026-10-15) runs `cargo xtask ci` on every pull
+  request and push to main on ubuntu-24.04, macos-15 and windows-2025 (Linux built with
+  craft-fonts; ffmpeg on all three, required on macOS). Not yet seen green on main: the first runs
+  may surface Windows- and Linux-only test failures nobody ran before.
+- **Missing:** a launch that never fails, and a CI that is green and stays required.
 - **Evidence:** open issues: macOS 12 Monterey aborts on a missing VideoToolbox symbol (#468,
   #661, #655), Intel UHD graphics (`igvk64.dll`, #512), Windows 11 does not run or fails after setup
   (#380, #582, #413, #477), crash on new project + import (#439), "it just keeps crashing" (#687).
-  `.github/workflows/` holds release, packaging lint, FreeBSD and Windows ARM64 builds; **none runs
-  `cargo test` or `cargo xtask ci` on a pull request**, so 243 PRs merged since 10-05 were gated by
-  contributors' local runs (main needed "green again after the batch merges" on 10-10).
+  Until 2026-10-15 `.github/workflows/` held release, packaging lint, FreeBSD and Windows ARM64
+  builds only, none running `cargo test` or `cargo xtask ci` on a pull request, so 243 PRs merged
+  since 10-05 were gated by contributors' local runs (main needed "green again after the batch
+  merges" on 10-10).
 - **Impact:** a user who cannot start the app gets zero value; regressions land unnoticed.
 - **Done when:** weak-linked or runtime-loaded OS symbols on old macOS, ~~a software / safe-mode
-  start when the GPU adapter fails~~ (done, #820), a PR workflow running `cargo xtask ci`
-  on macOS, Windows and Linux, and a crash-report triage pass. **40–80 h.**
+  start when the GPU adapter fails~~ (done, #820), ~~a PR workflow running `cargo xtask ci`
+  on macOS, Windows and Linux~~ (added 2026-10-15; counts once it is green on main), and a
+  crash-report triage pass. **40–80 h.**
 
 ## G5. Hardware acceleration is partial
 
@@ -316,3 +322,4 @@ platforms** G4, G9, G17; **performance** G16; **ecosystem** G11; **measurement**
 | 2026-10-10 | major | Created from ROADMAP.md's "Where we are lacking" (2026-10-05); re-ranked against Premiere 26.5.2 and the 188 open issues; added `.prproj`, 10-bit / 4:2:2 camera decode, launch crashes and missing PR CI, localization, delivery formats |
 | 2026-10-12 | minor | G10: MP1 (`A_MPEG/L1`) in Matroska imports (#1402) |
 | 2026-10-12 | minor | G10: OpenEXR PXR24 import |
+| 2026-10-15 | minor | G4: `.github/workflows/ci.yml` runs `cargo xtask ci` on pull requests and pushes to main on Linux, macOS and Windows |

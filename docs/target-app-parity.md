@@ -1,6 +1,6 @@
 # Parity with Adobe Premiere Pro
 
-> **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-10 · **Change:** major (full re-measure against Premiere Pro 2026 26.5.2; replaces the scorecard and estimate that lived in ROADMAP.md) · **Target:** Adobe Premiere Pro 2026 (26.5.2, macOS)
+> **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-15 · **Change:** minor (stability: pull-request CI workflow added, numbers unchanged until it is green) · **Target:** Adobe Premiere Pro 2026 (26.5.2, macOS)
 
 The authoritative assessment of how close FilmCraft is to Premiere Pro, and how much work is left.
 [ROADMAP.md](../ROADMAP.md) summarizes it; [gaps.md](gaps.md) lists every shortfall one at a time.
@@ -151,9 +151,9 @@ Evidence for the cross-cutting rows:
   a CPU fallback adapter rendering everything in software (#632).
 - **Stability ~45%.** Never-crash rules enforced by lints; hostile-input fuzzing. But open
   launch crashes on macOS 12 (missing VideoToolbox symbol, #468 / #661, #655), Intel UHD graphics
-  (#512), Windows 11 (#380, #582), a generic "keeps crashing" (#687), and **no workflow runs the
-  test suite on pull requests** (`.github/workflows` has release, packaging lint, FreeBSD and
-  Windows ARM64 builds only); `cargo xtask ci` runs locally only.
+  (#512), Windows 11 (#380, #582), a generic "keeps crashing" (#687). `cargo xtask ci` runs on
+  every pull request on Linux, macOS and Windows since 2026-10-15 (`.github/workflows/ci.yml`);
+  before that it ran locally only, and it has yet to be seen green on main.
 - **Platforms ~60%.** Releases for macOS, Windows (x64, ARM64), Linux (AppImage, Flatpak, deb,
   tar) and FreeBSD; Linux is something Premiere doesn't run on at all. Runtime testing is still
   mostly macOS; Windows and Linux reports dominate the issue list. The web build runs but its shell
@@ -226,8 +226,8 @@ Discounts for what still stops real work:
 - **Interaction fidelity ×0.90:** about 40 open UI issues; no transform handles in the Program
   monitor (#639); Effect Controls keyframe zoom / divider (#640–#645); docking (#493).
 - **Stability on real machines ×0.92:** current macOS on Apple silicon is solid, but launch
-  crashes on macOS 12, Intel UHD and Windows 11 (#468, #512, #380, #582, #687), and no CI runs the
-  tests on pull requests.
+  crashes on macOS 12, Intel UHD and Windows 11 (#468, #512, #380, #582, #687); pull-request CI is
+  new (2026-10-15) and not yet proven green.
 - **File exchange with Premiere users ×0.88:** `.prproj` does not open (colleagues send
   projects, not XML); AAF / OMF never validated in Avid / Pro Tools; FCP7 XML / OTIO do work.
 
@@ -354,6 +354,7 @@ control surfaces), and validation in Avid Media Composer / Pro Tools.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-15 | minor | Stability: `.github/workflows/ci.yml` runs `cargo xtask ci` on pull requests on three OSs; discounts unchanged until it is green on main |
 | 2026-10-10 | minor | Readiness table: hours to ~95% for each audience (full ~1,450–2,600, mainstream ~500–850, essentials ~180–350); full number confirmed as an additive weighted sum (no change) |
 | 2026-10-10 | minor | Added the three readiness numbers: full ready-for-real-work formula written out (~55% -> ~56%, same inputs, now computed rather than rounded down), mainstream practitioner ~55% and essentials user ~60% with written weights and discounts, and counted user evidence (31 people praising, 0 switch reports, ~64 core-path vs ~29 niche open bugs) |
 | 2026-10-10 | minor | Stage checked against the new core-workflow gate (docs/roadmap.md#alpha-gate): passes, stays alpha |
