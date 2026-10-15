@@ -100,7 +100,11 @@ platforms** G4, G9, G17; **performance** G16; **ecosystem** G11; **measurement**
   Until 2026-10-15 `.github/workflows/` held release, packaging lint, FreeBSD and Windows ARM64
   builds only, none running `cargo test` or `cargo xtask ci` on a pull request, so 243 PRs merged
   since 10-05 were gated by contributors' local runs (main needed "green again after the batch
-  merges" on 10-10).
+  merges" on 10-10). The first local run of the gates on main (2026-10-15, Linux) found four
+  regressions merged since 10-11: the dev desktop entry without the packaged MIME types (#1288),
+  a Spanish test string behind the reviewed catalog (#1233), and `timeline.select` ignoring
+  `linked: false` with Delete taking the unselected linked partner (#680's change lost in a
+  merge; #1163's Alt marquee test red). All four are fixed with the workflow.
 - **Impact:** a user who cannot start the app gets zero value; regressions land unnoticed.
 - **Done when:** weak-linked or runtime-loaded OS symbols on old macOS, ~~a software / safe-mode
   start when the GPU adapter fails~~ (done, #820), ~~a PR workflow running `cargo xtask ci`
