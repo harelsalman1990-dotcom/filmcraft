@@ -215,6 +215,11 @@ fn desktop_file_content(app_id: &str, name: &str, exe: &str) -> String {
     out.push_str("StartupNotify=true\n");
     out.push_str(&format!("StartupWMClass={app_id}\n"));
     out.push_str("Categories=AudioVideo;Video;AudioVideoEditing;\n");
+    // The project type and the video containers FilmCraft imports, as the packaged entry declares
+    // them (#1288), so a file manager offers the dev build too; audio and stills are left out there
+    // so an NLE doesn't crowd every song's and image's Open With list.
+    out.push_str("MimeType=application/x-filmcraft;video/mp4;video/x-m4v;video/quicktime;video/x-matroska;video/webm;");
+    out.push_str("video/vnd.avi;video/x-msvideo;application/mxf;video/mp2t;video/mpeg;video/3gpp;\n");
     out.push_str("Keywords=video;editor;film;timeline;color;grading;nle;\n");
     out
 }
