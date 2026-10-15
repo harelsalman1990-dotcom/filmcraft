@@ -3,10 +3,10 @@
 # before a commit (docs/contributing.md §3), so a regression fails here before it reaches main.
 # The Linux job builds with craft-fonts (the font tests run), the others without (the build must
 # also work without that optional input). ffmpeg and ffprobe are installed on all three so the
-# oracle tests run (docs/testing.md §2); on macOS a missing oracle fails the job instead of
-# skipping (`FILMCRAFT_REQUIRE_ORACLES`), because Homebrew's ffmpeg is recent and complete
-# (libx264 / libx265 / libaom / libvpx; APV needs ffmpeg 8). Ubuntu's ffmpeg is older, so on
-# Linux the tests that need a newer one print SKIPPED. No secrets are used and nothing is uploaded.
+# oracle tests run (docs/testing.md §2): Homebrew's on Linux and macOS (ffmpeg 8, complete with
+# libx264 / libx265 / libaom / libvpx; Ubuntu's own 6.1 fails several oracle tests), Chocolatey's
+# on Windows. On Linux and macOS a missing oracle fails the job instead of skipping
+# (`FILMCRAFT_REQUIRE_ORACLES`). No secrets are used and nothing is uploaded.
 name: CI
 
 on:
@@ -45,7 +45,7 @@ jobs:
           - name: Linux
             runner: ubuntu-24.04
             craft-fonts: true
-            require-oracles: false
+            require-oracles: true
           - name: macOS
             runner: macos-15
             craft-fonts: false
@@ -71,19 +71,30 @@ jobs:
           echo "CRAFT_FONTS_REQUIRED=1" >> "$GITHUB_ENV"
 
       # The headers winit, wgpu, cpal and rfd need (the list of the shared install-linux-deps
-      # action, without the packaging tools), Mesa's software Vulkan driver (lavapipe) so the
-      # GPU-vs-CPU parity tests run on a runner without a GPU, and the test oracle.
-      - name: Install Linux build libraries and ffmpeg
+      # action, without the packaging tools) and Mesa's software Vulkan driver (lavapipe), so the
+      # GPU-vs-CPU parity tests run on a runner without a GPU.
+      - name: Install Linux build libraries
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             libxkbcommon-dev libwayland-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev \
-            libasound2-dev pkg-config \
-            mesa-vulkan-drivers ffmpeg
+            libasound2-dev pkg-config mesa-vulkan-drivers
+      # The runner images ship Homebrew on Linux too (under /home/linuxbrew); its ffmpeg is the
+      # one the oracle tests are written against. On Linux only the two tools go on PATH (through
+      # /usr/local/bin), not all of Homebrew's bin: its pkg-config ahead of the system's would
+      # change what the build links against.
       - name: Install ffmpeg (Homebrew)
-        if: runner.os == 'macOS'
-        run: brew install ffmpeg
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+            brew install ffmpeg
+            sudo ln -sf "$(brew --prefix)/bin/ffmpeg" "$(brew --prefix)/bin/ffprobe" /usr/local/bin/
+          else
+            brew install ffmpeg
+          fi
       - name: Install ffmpeg (Chocolatey)
         if: runner.os == 'Windows'
         run: choco install ffmpeg --no-progress -y

@@ -90,8 +90,9 @@ platforms** G4, G9, G17; **performance** G16; **ecosystem** G11; **measurement**
   instead of dying inside the stale one (`filmcraft_gpu::adapter`).
 - **Have (CI):** `.github/workflows/ci.yml` (2026-10-15) runs `cargo xtask ci` on every pull
   request and push to main on ubuntu-24.04, macos-15 and windows-2025 (Linux built with
-  craft-fonts; ffmpeg on all three, required on macOS). Not yet seen green on main: the first runs
-  may surface Windows- and Linux-only test failures nobody ran before.
+  craft-fonts; Homebrew's ffmpeg 8 on Linux and macOS with the oracle tests required, Chocolatey's
+  on Windows). Not yet seen green on main: the first runs may surface Windows- and Linux-only test
+  failures nobody ran before.
 - **Missing:** a launch that never fails, and a CI that is green and stays required.
 - **Evidence:** open issues: macOS 12 Monterey aborts on a missing VideoToolbox symbol (#468,
   #661, #655), Intel UHD graphics (`igvk64.dll`, #512), Windows 11 does not run or fails after setup

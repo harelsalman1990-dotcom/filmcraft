@@ -11,12 +11,12 @@ of the crate you will change.
 | Rust | stable ≥ 1.95 (edition 2024; egui 0.36 requires it), via [rustup](https://rustup.rs) |
 | wasm target | `rustup target add wasm32-unknown-unknown` (for `cargo xtask wasm`) |
 | Components | `rustup component add rustfmt clippy` |
-| ffmpeg + ffprobe (optional) | test oracle and fixture generator only; tests skip without it |
+| ffmpeg + ffprobe (optional) | test oracle and fixture generator only, **8.0 or newer** ([testing.md §2](testing.md#2-ffmpeg-oracle-tests)); tests skip without it |
 
 | OS | Extra |
 |---|---|
 | macOS | Xcode Command Line Tools. ffmpeg: `brew install ffmpeg` (includes libx264/libx265). |
-| Linux | C toolchain and the system headers cpal and rfd need: ALSA (`libasound2-dev`) and GTK 3 (`libgtk-3-dev`), plus the usual X11/Wayland development packages for winit. ffmpeg from your distribution, built with libx264 and libx265. |
+| Linux | C toolchain and the system headers cpal and rfd need: ALSA (`libasound2-dev`) and GTK 3 (`libgtk-3-dev`), plus the usual X11/Wayland development packages for winit. ffmpeg 8 or newer with libx264 and libx265 (Homebrew on Linux, or a static build): Ubuntu 24.04's 6.1 fails several oracle tests ([testing.md §2](testing.md#2-ffmpeg-oracle-tests)). |
 | Windows | MSVC build tools. The oracle tests look for ffmpeg only in `/opt/homebrew/bin`, `/usr/local/bin` and `/usr/bin`, so most of them skip on Windows. |
 
 The oracle tests find ffmpeg at `/opt/homebrew/bin`, `/usr/local/bin` or `/usr/bin`. H.264 and

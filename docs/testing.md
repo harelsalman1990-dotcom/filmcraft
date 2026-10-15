@@ -55,8 +55,18 @@ are never linked or shipped ([AGENTS.md](../AGENTS.md) §2).
   The pull-request workflow (`.github/workflows/ci.yml`) installs ffmpeg on all three OSs and sets
   the variable on macOS, whose Homebrew ffmpeg is current and complete; Ubuntu's is older, so the
   Linux job lets the tests that need a newer one skip.
-- Some oracles need a recent ffmpeg: the APV tests (`crates/apv/tests/oracle.rs`) skip when
+- Some oracles need a recent ffmpeg: the APV tests (`crates/apv/tests/oracle.rs`) and the APV
+  presets in `engine`'s `every_builtin_preset_exports_and_ffprobe_confirms` skip when
   `ffmpeg -formats` does not list `apv` (ffmpeg ≥ 8.0), naming the detected version.
+- The suite is written against the ffmpeg Homebrew ships (8.x); use **8.0 or newer**. Ubuntu
+  24.04's 6.1.1 fails five oracle tests (measured 2026-10-15; the pictures and files are right,
+  the oracle differs): `filmcraft-cli` `phone_vfr_clip_extract_gain_title_to_h264_mp4` (its
+  swscale expands the range of a `yuv420p → gray` conversion for a stream tagged limited range
+  but not for an untagged one, 19 levels apart on the same picture), `media`
+  `exr_stills_match_ffmpeg` and `exr_sequence_plays_linear_float_frames` (it cannot decode our
+  EXR fixtures), `media` `ffmpeg_ycbcr_tiffs_match_ffmpeg_decode` (YCbCr TIFF decode up to 30
+  apart) and `matroska` `mjpeg_ac3` (other AC-3 packet durations). The pull-request workflow
+  installs Homebrew's ffmpeg on Linux for that reason.
 - Fixtures are generated on first use into `<workspace>/target/fixtures/<crate>/`
   (`filmcraft_testkit::fixtures_dir`; independent of `CARGO_TARGET_DIR`, so agents with private
   target dirs share them; `FILMCRAFT_FIXTURES_DIR` overrides the root) and reused afterwards.
