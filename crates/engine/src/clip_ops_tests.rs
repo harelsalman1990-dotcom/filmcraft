@@ -122,6 +122,67 @@ fn label_commands_and_select_label_group() {
     assert_eq!(s.state.selection.len(), 1);
 }
 
+/// `timeline.select {linked: false}` selects just the clips named, without their linked partners
+/// (an Alt marquee, #1163); by default Linked Selection decides. A value that is not a bool is
+/// the default, never an error.
+#[test]
+fn select_without_linked_partners_when_asked() {
+    let mut s = demo();
+    let v = v1(&s).into_iter().find(|c| c.link.is_some()).unwrap();
+    let a = s.active_sequence().unwrap().audio_tracks.iter().flat_map(|t| t.items.iter()).find(|i| i.link == v.link).unwrap().id;
+    select(&mut s, &[v.id.0]);
+    assert!(s.state.selection.contains(&a), "Linked Selection brings the audio along");
+    s.execute("timeline.select", json!({"clips": [v.id.0], "linked": false})).unwrap();
+    assert_eq!(s.state.selection, vec![v.id]);
+    s.execute("timeline.select", json!({"clips": [a.0], "add": true, "linked": false})).unwrap();
+    assert_eq!(s.state.selection, vec![v.id, a], "add keeps the earlier selection and adds just the clip");
+    s.execute("timeline.select", json!({"clips": [v.id.0], "toggle": true, "linked": false})).unwrap();
+    assert_eq!(s.state.selection, vec![a], "toggle removes just the clip");
+    s.execute("timeline.select", json!({"clips": [v.id.0], "linked": "no"})).unwrap();
+    assert!(s.state.selection.contains(&v.id) && s.state.selection.contains(&a));
+}
+
+/// Delete and Ripple Delete remove the selection as it was made: a clip selected on its own (Alt,
+/// `linked: false`) goes without its linked partner, a normally selected one with it; clips named
+/// in the parameters follow links as before (#680, #1163).
+#[test]
+fn clear_respects_individually_selected_linked_clips_and_undo() {
+    for audio in [false, true] {
+        let mut s = demo();
+        let video = v1(&s).into_iter().find(|c| c.link.is_some()).unwrap();
+        let sound = s.active_sequence().unwrap().audio_tracks.iter().flat_map(|t| t.items.iter()).find(|i| i.link == video.link).unwrap().clone();
+        let (selected, partner) = if audio { (sound.id, video.id) } else { (video.id, sound.id) };
+        s.execute("timeline.select", json!({"clips": [selected.0], "linked": false})).unwrap();
+        s.execute("edit.clear", json!({})).unwrap();
+        assert!(s.active_sequence().unwrap().find_item(selected).is_none());
+        assert!(s.active_sequence().unwrap().find_item(partner).is_some(), "the unselected partner stays");
+        s.execute("edit.undo", json!({})).unwrap();
+        assert!(s.active_sequence().unwrap().find_item(selected).is_some());
+        select(&mut s, &[selected.0]);
+        assert_eq!(s.state.selection.len(), 2);
+        s.execute("edit.clear", json!({})).unwrap();
+        assert!(s.active_sequence().unwrap().find_item(partner).is_none(), "a linked selection goes together");
+    }
+}
+
+#[test]
+fn ripple_delete_respects_individual_selection_and_named_clips_follow_links() {
+    let mut s = demo();
+    let video = v1(&s).into_iter().find(|c| c.link.is_some()).unwrap();
+    let sound = s.active_sequence().unwrap().audio_tracks.iter().flat_map(|t| t.items.iter()).find(|i| i.link == video.link).unwrap().id;
+    let tracks: Vec<u64> = s.active_sequence().unwrap().all_tracks().map(|t| t.id.0).collect();
+    for track in tracks {
+        s.execute("timeline.setTrack", json!({"track": track, "syncLock": false})).unwrap();
+    }
+    s.execute("timeline.select", json!({"clips": [video.id.0], "linked": false})).unwrap();
+    s.execute("edit.rippleDelete", json!({})).unwrap();
+    assert!(s.active_sequence().unwrap().find_item(video.id).is_none());
+    assert!(s.active_sequence().unwrap().find_item(sound).is_some());
+    s.execute("edit.undo", json!({})).unwrap();
+    s.execute("edit.clear", json!({"clips": [video.id.0]})).unwrap();
+    assert!(s.active_sequence().unwrap().find_item(sound).is_none(), "named clips take their linked partners");
+}
+
 #[test]
 fn select_all_matching_selects_every_use_of_the_source() {
     let mut s = demo();
