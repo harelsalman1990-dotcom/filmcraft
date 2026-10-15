@@ -258,6 +258,12 @@ fn every_builtin_preset_exports_and_ffprobe_confirms() {
                 assert_eq!(a["codec_name"], "pcm_s24le", "{name}");
             }
             "apv" => {
+                // ffprobe reads APV from ffmpeg 8.0 on; an older oracle reports no codec. Skip
+                // this preset's confirmation then, as the APV oracle tests do (a failure under
+                // FILMCRAFT_REQUIRE_ORACLES=1).
+                if filmcraft_testkit::ffmpeg_with_format_or_skip(&format!("export presets: {name}"), "apv", "8.0").is_none() {
+                    continue;
+                }
                 assert!(fmt_name.contains("mov"), "{name}: {fmt_name}");
                 assert_eq!(v["codec_name"], "apv", "{name}");
                 let p = settings["apvProfile"].as_str().unwrap();
