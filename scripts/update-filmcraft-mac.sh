@@ -10,6 +10,10 @@
 # zip, verifies both against the release's SHA256SUMS.txt, quits FilmCraft if it is running,
 # replaces /Applications/FilmCraft.app, and installs filmcraft-cli into /usr/local/bin (sudo asks
 # for your password once). Nothing else on the machine is touched.
+#
+# macOS 13+ note: replacing an app that is already in /Applications from a terminal needs the
+# "App Management" permission for the terminal app (System Settings > Privacy & Security >
+# App Management). Without it the script stops with "Operation not permitted" and says so.
 set -euo pipefail
 
 REPO="storytold/filmcraft"
@@ -24,25 +28,43 @@ die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 command -v curl >/dev/null || die "curl is missing"
 
 say "Looking up the latest release of $REPO"
-TAG="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" | grep -m1 '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')"
-[ -n "$TAG" ] || die "could not read the latest release tag from GitHub"
+# github.com/<repo>/releases/latest redirects to /releases/tag/<tag>; that needs no API token and
+# has no rate limit. The API is the fallback. (Read replies into variables: `curl | grep -m1`
+# makes grep close the pipe early, curl then exits 56, and pipefail turns that into a failure.)
+TAG=""
+LATEST_URL="$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$REPO/releases/latest" 2>/dev/null || true)"
+case "$LATEST_URL" in
+  */releases/tag/*) TAG="${LATEST_URL##*/releases/tag/}" ;;
+esac
+if [ -z "$TAG" ]; then
+  RELEASE_JSON="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null || true)"
+  TAG="$(printf '%s\n' "$RELEASE_JSON" | grep '"tag_name"' | head -1 | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')"
+fi
+if [ -z "$TAG" ]; then
+  # Last resort: the first "releases/tag/v…" link on the latest-release page.
+  PAGE="$(curl -fsSL "https://github.com/$REPO/releases/latest" 2>/dev/null || true)"
+  TAG="$(printf '%s\n' "$PAGE" | grep -o 'releases/tag/v[0-9][0-9.]*' | head -1 | sed 's|releases/tag/||')"
+fi
+[ -n "$TAG" ] || die "could not find the latest release tag on GitHub (network?)"
 VER="${TAG#v}"
 
-INSTALLED="none"
+CLI_VER="none"
 if command -v filmcraft-cli >/dev/null 2>&1; then
-  INSTALLED="$(filmcraft-cli --version 2>/dev/null | awk '{print $2}')"
+  CLI_VER="$(filmcraft-cli --version 2>/dev/null | awk '{print $2}')"
 fi
-APP_INSTALLED="no"
-[ -d "$APP_DIR/FilmCraft.app" ] && APP_INSTALLED="yes"
+APP_VER="none"
+if [ -d "$APP_DIR/FilmCraft.app" ]; then
+  APP_VER="$(defaults read "$APP_DIR/FilmCraft.app/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "unknown")"
+fi
 
 echo "latest release:     $VER"
-echo "installed CLI:      $INSTALLED"
-echo "installed app:      $APP_INSTALLED ($APP_DIR/FilmCraft.app)"
+echo "installed app:      $APP_VER ($APP_DIR/FilmCraft.app)"
+echo "installed CLI:      $CLI_VER ($CLI_DIR/filmcraft-cli)"
 
 if [ "$MODE" = "--check" ]; then
   exit 0
 fi
-if [ "$MODE" != "--force" ] && [ "$INSTALLED" = "$VER" ] && [ "$APP_INSTALLED" = "yes" ]; then
+if [ "$MODE" != "--force" ] && [ "$CLI_VER" = "$VER" ] && [ "$APP_VER" = "$VER" ]; then
   echo "already up to date; run with --force to reinstall"
   exit 0
 fi
@@ -76,8 +98,18 @@ osascript -e 'tell application "FilmCraft" to quit' >/dev/null 2>&1 || true
 sleep 1
 MNT="$(hdiutil attach -nobrowse -readonly -noverify "$DMG" | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
 [ -n "$MNT" ] && [ -d "$MNT/FilmCraft.app" ] || die "could not mount the DMG or find FilmCraft.app in it"
-rm -rf "$APP_DIR/FilmCraft.app"
-cp -R "$MNT/FilmCraft.app" "$APP_DIR/"
+# Replacing an existing signed app from a terminal needs macOS 13+'s "App Management" permission
+# for the terminal app; without it, even sudo gets "Operation not permitted".
+if [ -e "$APP_DIR/FilmCraft.app" ]; then
+  rm -rf "$APP_DIR/FilmCraft.app" 2>/dev/null || sudo rm -rf "$APP_DIR/FilmCraft.app" 2>/dev/null || {
+    hdiutil detach "$MNT" -quiet || true
+    die "cannot replace $APP_DIR/FilmCraft.app (Operation not permitted).
+  Fix once: System Settings > Privacy & Security > App Management > enable your terminal app
+  (Terminal or iTerm), then run this script again. Or install by hand: open the DMG in Finder
+  and drag FilmCraft into Applications, choosing Replace."
+  }
+fi
+ditto "$MNT/FilmCraft.app" "$APP_DIR/FilmCraft.app" 2>/dev/null || sudo ditto "$MNT/FilmCraft.app" "$APP_DIR/FilmCraft.app"
 hdiutil detach "$MNT" -quiet || hdiutil detach "$MNT" -force -quiet || true
 
 say "Installing filmcraft-cli into $CLI_DIR (sudo may ask for your password)"
