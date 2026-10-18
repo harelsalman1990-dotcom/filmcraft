@@ -82,7 +82,9 @@ https://github.com/storytold/filmcraft/releases/latest — נכון ל־18.10 ה
 
 ה־DMG מספיק כדי לנסות ולערוך. בילד מהקוד נדרש רק כדי לשנות את התוכנה, או כדי להריץ תיקונים שנכנסו ל־`main` ועוד לא יצאו ברלאז.
 
-**עדכון לגרסה חדשה:** `scripts/update-filmcraft-mac.sh` (בברנץ' הזה) מוריד את הרלאז האחרון, מאמת SHA256, מחליף את `/Applications/FilmCraft.app` ומתקין את `filmcraft-cli` ב־`/usr/local/bin`. `--check` רק מדווח גרסאות, `--force` מתקין מחדש. הותקן ב־18.10 גם כ־`~/update-filmcraft.sh` על המק. אין עדכון אוטומטי בתוך האפליקציה.
+**עדכון לגרסה חדשה:** `scripts/update-filmcraft-mac.sh` (בברנץ' הזה) מוריד את הרלאז האחרון, מאמת SHA256, מחליף את `/Applications/FilmCraft.app` ומתקין את `filmcraft-cli` ב־`/usr/local/bin`. `--check` רק מדווח גרסאות, `--force` מתקין מחדש. הותקן ב־18.10 גם כ־`~/update-filmcraft.sh` על המק. אין עדכון אוטומטי בתוך האפליקציה. החלפת אפליקציה קיימת מהטרמינל דורשת ב־macOS 13+ הרשאת App Management לטרמינל (System Settings ▸ Privacy & Security ▸ App Management), אחרת מחליפים דרך Finder.
+
+**גרסת דפדפן (ל־Claude for Chrome):** `scripts/serve-filmcraft-web.sh` מוריד את `filmcraft-web-<ver>.zip` מהרלאז, פורס ל־`~/FilmCraft-Web/` ומגיש על `http://localhost:8765/` עם `python3 -m http.server`, ופותח כרום. אותו מנוע ו־UI כמו הדסקטופ (WASM, WebGPU), אבל חד־תהליכי: בלי render previews / proxies, ייצוא יוצא כהורדה, מדיה דרך בורר קבצים או drag&drop, פענוח HEVC דרך WebCodecs של הדפדפן. יש `window.filmcraft` (API של control channel כ־promises, `docs/web.md`). לעבודת סוכן רצינית עדיף Claude Code + MCP על הדסקטופ.
 
 ### פקודות
 
