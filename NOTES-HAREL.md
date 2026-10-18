@@ -9,10 +9,10 @@
 - **המטרה:** להחליף את Premiere Pro לעריכות פשוטות: חיתוך קליפים, מעברים, כותרות/טקסט, מוזיקה, תיקון צבע בסיסי, ייצוא MP4 לרשתות חברתיות. בהמשך: התאמות אישיות לתוכנה.
 - **המחשב:** MacBook Pro, Apple Silicon, 96 GB RAM.
 - **הריפו:** `harelsalman1990-dotcom/filmcraft` הוא fork של `storytold/filmcraft`.
-  - 2026-10-16: `main` של ה־fork סונכרן (fast-forward בלבד) ל־`main` של המקור, commit `c2f6587` מ־15.10.2026. הוא כולל את גרסה **v0.8.0** (14.10.2026) ועוד 6 commits אחריה. ב־14.10 הוא עמד על `cee1feb`, שהוא בדיוק הקוד שסקרתי; v0.8.0 הוא אותו קוד + העלאת מספר גרסה.
-  - ברנץ' עבודה שלי: `harel-custom` (עבר rebase על `main` העדכני ב־16.10). כל שינוי אישי הולך לכאן, לא ל־`main`.
+  - 2026-10-18: `main` של ה־fork סונכרן (fast-forward בלבד) ל־`main` של המקור, commit `48088e3` מ־18.10.2026. הוא כולל את גרסה **v0.9.0** (tag מ־17.10 בערב, שעון ארה"ב) ועוד ~25 PRs שמוזגו ב־18.10 אחריה. היסטוריה: ב־14.10 עמד על `cee1feb` (= v0.8.0 בלי העלאת גרסה), ב־16.10 על `c2f6587`.
+  - ברנץ' עבודה שלי: `harel-custom` (עבר rebase על `main` העדכני ב־18.10). כל שינוי אישי הולך לכאן, לא ל־`main`.
   - כדי לסנכרן בעתיד: `git fetch https://github.com/storytold/filmcraft main && git checkout main && git merge --ff-only FETCH_HEAD && git push origin main`, ואז `git checkout harel-custom && git merge main`.
-- **הפרויקט:** NLE בקוד פתוח (MIT OR Apache-2.0), Rust טהור, clean-room (בלי FFmpeg בתוך המוצר, הקודקים נכתבו מהתקנים). גרסה 0.8.0 (14.10.2026), שלב **alpha**. המתחזקים מעריכים "~56% מוכן לעבודה אמיתית" ו"~60% למשתמש essentials" (ייבוא, חיתוך, כותרת, מוזיקה, ייצוא). מאות issues פתוחים (506 נכון להיום), הפרויקט זז מהר מאוד (~75 PRs ביום בשיא).
+- **הפרויקט:** NLE בקוד פתוח (MIT OR Apache-2.0), Rust טהור, clean-room (בלי FFmpeg בתוך המוצר, הקודקים נכתבו מהתקנים). גרסה 0.9.0 (18.10.2026), שלב **alpha**. המתחזקים מעריכים "~56% מוכן לעבודה אמיתית" ו"~60% למשתמש essentials" (ייבוא, חיתוך, כותרת, מוזיקה, ייצוא). מאות issues פתוחים (506 נכון להיום), הפרויקט זז מהר מאוד (~75 PRs ביום בשיא).
 
 ## 1. מבנה הפרויקט בפשטות
 
@@ -74,10 +74,10 @@ Cargo workspace עם ~45 crates בשכבות (L0 למטה, L6 למעלה). חו�
 
 ### הורדה מוכנה (בלי בילד)
 
-https://github.com/storytold/filmcraft/releases/latest — נכון ל־16.10 הגרסה היא **v0.8.0** (14.10.2026):
+https://github.com/storytold/filmcraft/releases/latest — נכון ל־18.10 הגרסה היא **v0.9.0** (18.10.2026, שעון ישראל):
 
-- `filmcraft-0.8.0-macos-universal.dmg` (70 MB): האפליקציה, חתומה ו־notarized. לפתוח ולגרור ל־Applications.
-- `filmcraft-cli-0.8.0-macos-universal.zip` (58 MB): ה־CLI וה־MCP, נפרדים מה־.app. לפרוס ולהעתיק ל־`/usr/local/bin` (או כל תיקייה ב־PATH).
+- `filmcraft-0.9.0-macos-universal.dmg` (70 MB): האפליקציה, חתומה ו־notarized. לפתוח ולגרור ל־Applications.
+- `filmcraft-cli-0.9.0-macos-universal.zip` (58 MB): ה־CLI וה־MCP, נפרדים מה־.app. לפרוס ולהעתיק ל־`/usr/local/bin` (או כל תיקייה ב־PATH).
 - `SHA256SUMS.txt`: לאימות, `shasum -a 256 -c SHA256SUMS.txt --ignore-missing` בתיקיית ההורדות.
 
 ה־DMG מספיק כדי לנסות ולערוך. בילד מהקוד נדרש רק כדי לשנות את התוכנה, או כדי להריץ תיקונים שנכנסו ל־`main` ועוד לא יצאו ברלאז.
@@ -284,7 +284,7 @@ echo '{"id":"file.newBin","params":{"name":"Selects"}}' | filmcraft-cli --projec
 
 ## 6. צעדים מוצעים לשיחה הבאה (על המק)
 
-1. להתקין את v0.8.0 מה־DMG (§2, "הורדה מוכנה") ולהתחיל לנסות מיד. במקביל להכין בילד: `rustup update && rustc --version` (≥ 1.95), `xcode-select --install`, `brew install ffmpeg` (אופציונלי).
+1. להתקין את v0.9.0 מה־DMG (§2, "הורדה מוכנה") ולהתחיל לנסות מיד. במקביל להכין בילד: `rustup update && rustc --version` (≥ 1.95), `xcode-select --install`, `brew install ffmpeg` (אופציונלי).
 2. `git checkout harel-custom`, ואז `time cargo build --release -p filmcraft -p filmcraft-cli` — **לרשום את הזמן כאן**.
 3. להריץ `./target/release/filmcraft --control 9876`, לייבא קליפ HEVC אנכי מהאייפון + MP3, לחתוך, Cross Dissolve, כותרת עברית, Lumetri Basic, ייצוא עם preset `Social Vertical 1080×1920` **עם Hardware encoding ו־GPU Rendering מופעלים**. למדוד זמן ולבדוק ב־ffprobe.
 4. לבדוק את הבאגים שסימנתי "לבדוק אצלי": #1329 (ייצוא קליפ מסובב), #1700 (fps של קליפ טלפון: `exec media.status` / Media File Properties), #1622 (dropped frames, `perf.stats`), #1265 (רעש בפלייבק), #1773 (Cmd+V כפול), #1682 (זיכרון).
@@ -310,3 +310,15 @@ echo '{"id":"file.newBin","params":{"name":"Selects"}}' | filmcraft-cli --projec
 - **ב־`main` אחרי v0.8.0** (15.10, עדיין לא ברלאז): תיקון deadlock נוסף בייצוא (`fix(export): prevent nested renderer-pool deadlocks`, `8309f21`); שמות קבצים Unicode ברצפי תמונות (#1565); panic ב־URL עם Unicode בייבוא EDL (#1591); בחירת קליפים מקושרים ב־timeline; שינוי CI בלבד ל־FreeBSD.
 - **עדיין לא מוזגו (16.10):** #1807 (Cmd+V כפול במק), #1739 / #1729 (fps של קליפי טלפון, #1700), #1334 (המרת צבע בייצוא), #1478 (ערבית ב־Windows), #1588 (`command_list` קומפקטי).
 - **מה עשיתי בריפו ב־16.10:** `main` של ה־fork הועלה (fast-forward בלבד, בלי commits שלי) ל־`c2f6587`; `harel-custom` עבר rebase על זה והקובץ הזה עודכן.
+
+## 9. עדכון 2026-10-18: v0.9.0 ו־main
+
+- **v0.9.0 יצאה** (tag `4a69a03`, 17.10 בערב שעון ארה"ב). לעומת v0.8.0 היא קטנה: תיקון deadlock נוסף בייצוא (renderer pool, #861); שמות קבצים ו־URL עם עברית/Unicode לא מקריסים (#1565, #1591); בחירת קליפים מקושרים נשמרת במחיקה (#1639); נתיבי מדיה שמורים נפתחים רק במחשב הזה או בשיתוף של הפרויקט, ו־Edit Original פותח רק קבצי מדיה רגילים (#2304, בטיחות); CI.
+- **ב־`main` אחרי v0.9.0** (כ־25 PRs ב־18.10, עדיין לא ברלאז), הרלוונטיים לי:
+  - **ייצוא:** קבצי SDR מקבלים תיבת `colr` (#2142) — חשוב לצבעים נכונים ב־QuickTime/אינסטגרם; ייצוא שהתחיל בלי `wait` אומר איפה לעקוב אחריו (#1544, הבאג של ה־bridge); CLI `render` דוחה `--seconds`/`--scale` לא מספריים.
+  - **כותרות/כתוביות:** outer stroke עם Fill כבוי מצייר רק את הטבעת (#1876); פאנל Properties עורך טקסט וזמני in/out של כתובית (#1846); חוזה של `captions.setStyle margin` (#1542); tick rate של TTML; פונטים בלי outlines לא מוצגים בבורר.
+  - **מוניטור/timeline:** waveform ב־Source עוקב אחרי זום (#1782); Audio Clip Mixer נצמד לרוחב הפאנל (#1922); Basic 3D שומר פרספקטיבה (#1920); keyframe שנגרר בגרף נשאר במקום (#1918); מצבי enabled בתפריטים; סמני resize (#2263).
+  - **ביצועים:** Lens Blur מחשב offsets פעם בפריים (#1871).
+  - **robustness:** matroska/mxf/aaf saturating sums, CLI dotted keys depth, .3dl LUT עם mesh ענק נדחה.
+- **עדיין לא מוזגו (18.10):** #1807 (Cmd+V כפול במק), #1739/#1729 (fps של קליפי טלפון), #1334, #1478, #1588. לא בדקתי מחדש issues חדשים.
+- **מה עשיתי בריפו ב־18.10:** `main` של ה־fork הועלה (fast-forward) ל־`48088e3`; `harel-custom` עבר rebase; הקובץ הזה עודכן (סעיף 2 מצביע ל־v0.9.0).
